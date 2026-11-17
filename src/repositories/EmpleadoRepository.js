@@ -1,31 +1,40 @@
+import { Empleado } from "../models/Empleado.js";
+
 // Almacenamiento en memoria: los datos viven en un arreglo mientras la aplicación está abierta.
+// Entrega copias para que nadie modifique un empleado sin pasar por el servicio.
 export class EmpleadoRepository {
   #empleados = [];
+  #siguienteId = 1; // como un AUTO_INCREMENT: nunca se reutiliza, aunque se elimine un empleado
 
-  guardar(empleado) {
+  guardar(datos) {
+    const empleado = new Empleado({ ...datos, id: this.#siguienteId++ });
     this.#empleados.push(empleado);
-    return empleado;
+    return this.#copiar(empleado);
   }
 
   obtenerTodos() {
-    return [...this.#empleados];
+    return this.#empleados.map((empleado) => this.#copiar(empleado));
   }
 
   buscarPorId(id) {
-    return this.#empleados.find((empleado) => empleado.id === id) ?? null;
+    return this.#copiar(this.#empleados.find((empleado) => empleado.id === id));
   }
 
   buscarPorIdentificacion(identificacion) {
-    return this.#empleados.find((empleado) => empleado.identificacion === identificacion) ?? null;
+    return this.#copiar(this.#empleados.find((empleado) => empleado.identificacion === identificacion));
   }
 
   actualizar(id, datos) {
-    const empleado = this.buscarPorId(id);
-    return empleado ? Object.assign(empleado, datos) : null;
+    const empleado = this.#empleados.find((e) => e.id === id);
+    return empleado ? this.#copiar(Object.assign(empleado, datos)) : null;
   }
 
   eliminar(id) {
     const indice = this.#empleados.findIndex((empleado) => empleado.id === id);
     return indice === -1 ? null : this.#empleados.splice(indice, 1)[0];
+  }
+
+  #copiar(empleado) {
+    return empleado ? new Empleado({ ...empleado }) : null;
   }
 }

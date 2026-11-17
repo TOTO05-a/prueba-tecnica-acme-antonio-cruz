@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-import { Empleado } from "../models/Empleado.js";
 import { EmpleadoValidator } from "../validators/EmpleadoValidator.js";
 
 export class EmpleadoService {
@@ -12,13 +10,11 @@ export class EmpleadoService {
     this.#validador = validador;
   }
 
-  // RF-01
+  // RF-01: el repositorio asigna el ID único.
   registrar(datos) {
     const datosValidos = this.#validador.validar(datos);
     this.#verificarIdentificacionLibre(datosValidos.identificacion);
-
-    const empleado = new Empleado({ id: randomUUID(), ...datosValidos });
-    return this.#repositorio.guardar(empleado);
+    return this.#repositorio.guardar(datosValidos);
   }
 
   // RF-02
@@ -34,7 +30,7 @@ export class EmpleadoService {
   }
 
   obtenerPorId(id) {
-    const empleado = this.#repositorio.buscarPorId(String(id ?? "").trim());
+    const empleado = this.#repositorio.buscarPorId(Number(id));
     if (!empleado) throw new Error("No existe un empleado con ese ID.");
     return empleado;
   }
@@ -44,7 +40,6 @@ export class EmpleadoService {
     const empleado = this.obtenerPorId(id);
     const datosValidos = this.#validador.validar({ ...empleado, ...cambios });
     this.#verificarIdentificacionLibre(datosValidos.identificacion, empleado.id);
-
     return this.#repositorio.actualizar(empleado.id, datosValidos);
   }
 
@@ -54,9 +49,16 @@ export class EmpleadoService {
     return this.#repositorio.eliminar(empleado.id);
   }
 
-  #verificarIdentificacionLibre(identificacion, idPropio = null) {
+  // Valida un campo mientras se escribe. `registrar` y `actualizar` vuelven a validar todo al guardar.
+  validarCampo(campo, valor, idActual = null) {
+    const limpio = this.#validador.validarCampo(campo, valor);
+    if (campo === "identificacion") this.#verificarIdentificacionLibre(limpio, idActual);
+    return limpio;
+  }
+
+  #verificarIdentificacionLibre(identificacion, idActual = null) {
     const existente = this.#repositorio.buscarPorIdentificacion(identificacion);
-    if (existente && existente.id !== idPropio) {
+    if (existente && existente.id !== idActual) {
       throw new Error("Ya existe un empleado con esa identificación.");
     }
   }

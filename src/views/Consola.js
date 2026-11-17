@@ -19,6 +19,8 @@ const CAMPOS = [
   ["salario", "Salario"],
 ];
 
+const RESPUESTAS_SI = ["s", "si", "sí"];
+
 // Vista: solo pide datos y muestra resultados; las reglas viven en el servicio.
 export class Consola {
   #servicio;
@@ -63,11 +65,11 @@ export class Consola {
     console.log("\n-- Registrar empleado --");
     const datos = {};
     for (const [campo, etiqueta] of CAMPOS) {
-      datos[campo] = await this.#preguntar(`${etiqueta}: `);
+      datos[campo] = await this.#pedirCampo(campo, etiqueta);
     }
 
     const empleado = this.#servicio.registrar(datos);
-    console.log(`Empleado registrado. ID único: ${empleado.id}`);
+    console.log(`Empleado registrado con ID ${empleado.id}.`);
   }
 
   listar() {
@@ -94,34 +96,52 @@ export class Consola {
   }
 
   async actualizar() {
-    const id = await this.#preguntar("ID único del empleado: ");
+    const id = await this.#preguntar("ID del empleado: ");
     const empleado = this.#servicio.obtenerPorId(id);
 
     console.log("Presione Enter para conservar el valor actual.");
     const cambios = {};
     for (const [campo, etiqueta] of CAMPOS) {
-      const valor = await this.#preguntar(`${etiqueta} [${empleado[campo]}]: `);
-      if (valor) cambios[campo] = valor;
+      const valor = await this.#pedirCampo(campo, etiqueta, empleado);
+      if (valor !== undefined) cambios[campo] = valor;
     }
 
-    const actualizado = this.#servicio.actualizar(id, cambios);
+    if (!Object.keys(cambios).length) {
+      console.log("No hubo cambios.");
+      return;
+    }
+    const actualizado = this.#servicio.actualizar(empleado.id, cambios);
     console.log(`Empleado actualizado: ${actualizado.nombres} ${actualizado.apellidos}`);
   }
 
   async eliminar() {
-    const id = await this.#preguntar("ID único del empleado: ");
+    const id = await this.#preguntar("ID del empleado: ");
     const empleado = this.#servicio.obtenerPorId(id);
 
     const respuesta = await this.#preguntar(
       `¿Eliminar a ${empleado.nombres} ${empleado.apellidos}? (s/n): `,
     );
-    if (respuesta.toLowerCase() !== "s") {
+    if (!RESPUESTAS_SI.includes(respuesta.toLowerCase())) {
       console.log("Eliminación cancelada.");
       return;
     }
 
-    this.#servicio.eliminar(id);
+    this.#servicio.eliminar(empleado.id);
     console.log("Empleado eliminado.");
+  }
+
+  // Pide un campo hasta que sea válido. Al actualizar, Enter conserva el valor actual (devuelve undefined).
+  async #pedirCampo(campo, etiqueta, empleado = null) {
+    const mensaje = empleado ? `${etiqueta} [${empleado[campo]}]: ` : `${etiqueta}: `;
+    while (true) {
+      const valor = await this.#preguntar(mensaje);
+      if (empleado && !valor) return undefined;
+      try {
+        return this.#servicio.validarCampo(campo, valor, empleado?.id);
+      } catch (error) {
+        console.log(`  ${error.message}`);
+      }
+    }
   }
 
   #mostrarMenu() {

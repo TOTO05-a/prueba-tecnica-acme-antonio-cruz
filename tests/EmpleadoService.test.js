@@ -20,14 +20,40 @@ const datosValidos = (cambios = {}) => ({
   ...cambios,
 });
 
-test("RF-01: registra un empleado con un ID único", () => {
+test("RF-01: registra empleados con un ID correlativo que no se reutiliza", () => {
   const servicio = crearServicio();
   const a = servicio.registrar(datosValidos());
   const b = servicio.registrar(datosValidos({ identificacion: "999" }));
 
-  assert.ok(a.id);
-  assert.notEqual(a.id, b.id);
+  assert.equal(a.id, 1);
+  assert.equal(b.id, 2);
   assert.equal(a.salario, 6500);
+
+  servicio.eliminar(b.id);
+  assert.equal(servicio.registrar(datosValidos({ identificacion: "777" })).id, 3);
+});
+
+test("los datos guardados no se pueden modificar desde fuera del servicio", () => {
+  const servicio = crearServicio();
+  const { id } = servicio.registrar(datosValidos());
+
+  servicio.listar()[0].salario = -1;
+  servicio.obtenerPorId(id).nombres = "";
+
+  assert.equal(servicio.obtenerPorId(id).salario, 6500);
+  assert.equal(servicio.obtenerPorId(id).nombres, "Antonio");
+});
+
+test("valida un campo en cuanto se escribe", () => {
+  const servicio = crearServicio();
+  const { id } = servicio.registrar(datosValidos());
+
+  assert.equal(servicio.validarCampo("nombres", "  Ana "), "Ana");
+  assert.equal(servicio.validarCampo("salario", "3500.50"), 3500.5);
+  assert.throws(() => servicio.validarCampo("nombres", ""), /nombres/);
+  assert.throws(() => servicio.validarCampo("identificacion", "123456"), /Ya existe/);
+  // al actualizar, su propia identificación no cuenta como repetida
+  assert.equal(servicio.validarCampo("identificacion", "123456", id), "123456");
 });
 
 test("RF-01: no permite identificaciones duplicadas", () => {
@@ -61,7 +87,7 @@ test("RF-04: actualiza solo los campos indicados", () => {
 
   assert.equal(actualizado.cargo, "Líder técnico");
   assert.equal(actualizado.nombres, "Antonio");
-  assert.throws(() => servicio.actualizar("id-inexistente", {}), /No existe/);
+  assert.throws(() => servicio.actualizar("99", {}), /No existe/);
 });
 
 test("RF-04: valida las reglas y la identificación duplicada al actualizar", () => {
@@ -109,9 +135,10 @@ test("RN-04: profesión y cargo son obligatorios", () => {
   assert.throws(() => servicio.registrar(datosValidos({ cargo: "" })), /cargo/);
 });
 
-test("RN-05: el salario debe ser mayor que 0", () => {
+test("RN-05: el salario debe ser un número mayor que 0", () => {
   const servicio = crearServicio();
-  for (const salario of ["0", "-100", "abc", ""]) {
+  // "1.500" se rechaza: con punto de miles se guardaría como 1.5
+  for (const salario of ["0", "-100", "abc", "", "1.500", "1,500"]) {
     assert.throws(() => servicio.registrar(datosValidos({ salario })), /salario/);
   }
 });
