@@ -1,35 +1,31 @@
+// Almacenamiento en memoria: los datos viven en un arreglo mientras la aplicación está abierta.
 export class EmpleadoRepository {
-    constructor() {
-        this.empleados = [];
-}
+  #empleados = [];
 
-guardar(empleado){
-    this.empleados.push(empleado); 
+  guardar(empleado) {
+    this.#empleados.push(empleado);
     return empleado;
-}
+  }
 
-obtenerTodos(){
-    return [...this.empleados];
-}
-buscarPorId(id){
-    return this.empleados.find(empleado => empleado.id === id);
-}
+  obtenerTodos() {
+    return [...this.#empleados];
+  }
 
-buscarPorIdentificacion(identificacion){
-    return this.empleados.find((empleado) => empleado.identificacion === identificacion ?? null);
-}
+  buscarPorId(id) {
+    return this.#empleados.find((empleado) => empleado.id === id) ?? null;
+  }
 
-actualizar(id, datos){
-    const indice = this.empleados.findIndex((empleado) => empleado.id === id);
-    if (indice === -1) return null;
-    this.empleados[indice] = { ...this.empleados[indice], ...datos };
-    return this.empleados[indice];
-}
+  buscarPorIdentificacion(identificacion) {
+    return this.#empleados.find((empleado) => empleado.identificacion === identificacion) ?? null;
+  }
 
-eliminar(id){
-    const indice = this.empleados.findIndex((empleado) => empleado.id === id);
-    if (indice === -1) return null;
-    
-    return this.empleados.splice(indice, 1)[0];
-}
+  actualizar(id, datos) {
+    const empleado = this.buscarPorId(id);
+    return empleado ? Object.assign(empleado, datos) : null;
+  }
+
+  eliminar(id) {
+    const indice = this.#empleados.findIndex((empleado) => empleado.id === id);
+    return indice === -1 ? null : this.#empleados.splice(indice, 1)[0];
+  }
 }

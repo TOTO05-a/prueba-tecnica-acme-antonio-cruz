@@ -1,21 +1,19 @@
 {
   "name": "prueba-tecnica_acme_antonio-cruz",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Aplicación de consola para la gestión de empleados de ACME",
+  "type": "module",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TOTO05-a/prueba-tecnica_acme_antonio-cruz.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/TOTO05-a/prueba-tecnica_acme_antonio-cruz/issues"
-  },
-  "homepage": "https://github.com/TOTO05-a/prueba-tecnica_acme_antonio-cruz#readme"
+  "license": "ISC"
 }

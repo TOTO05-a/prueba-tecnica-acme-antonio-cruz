@@ -1,17 +1,17 @@
 export class Empleado {
-    constructor({
-        id,
-        identificacion,
-        nombres,
-        apellidos,
-        genero,
-        email,
-        telefono,
-        direccion,
-        ciudad,
-        profesion,
-        cargo,
-        salario
+  constructor({
+    id,
+    identificacion,
+    nombres,
+    apellidos,
+    genero,
+    email,
+    telefono,
+    direccion,
+    ciudad,
+    profesion,
+    cargo,
+    salario,
   }) {
     this.id = id;
     this.identificacion = identificacion;
@@ -25,5 +25,5 @@ export class Empleado {
     this.profesion = profesion;
     this.cargo = cargo;
     this.salario = salario;
-    }
+  }
 }

@@ -1,138 +1,140 @@
-import { createInterface } from "node:readline/promises"; //importa de node una interfaz para leer y escribir en la consola por preguntas y respuestas
-import { stdin, stdout } from "node:process";//modulo nativo de node que permite la entrada(stdin) y salida(stdout) de datos en la consola
+import { createInterface } from "node:readline";
+import { stdin, stdout } from "node:process";
 
+// Se lanza cuando el usuario cierra la entrada (Ctrl+C o Ctrl+D).
+class EntradaCerrada extends Error {}
+
+// Orden y etiqueta de los datos que se piden por consola.
+const CAMPOS = [
+  ["identificacion", "Identificación"],
+  ["nombres", "Nombres"],
+  ["apellidos", "Apellidos"],
+  ["genero", "Género (M/F/O)"],
+  ["email", "Email"],
+  ["telefono", "Teléfono"],
+  ["direccion", "Dirección"],
+  ["ciudad", "Ciudad de residencia"],
+  ["profesion", "Profesión"],
+  ["cargo", "Cargo"],
+  ["salario", "Salario"],
+];
+
+// Vista: solo pide datos y muestra resultados; las reglas viven en el servicio.
 export class Consola {
-    constructor(empleadoController) {
-        this.empleadoController = empleadoController;
-        this.entrada = createInterface({ input: stdin, output: stdout });
+  #servicio;
+  #entrada = createInterface({ input: stdin, output: stdout });
+  #lineas = this.#entrada[Symbol.asyncIterator](); // encola lo que escribe el usuario
+
+  #opciones = [
+    { texto: "Registrar empleado", accion: () => this.registrar() },
+    { texto: "Listar empleados", accion: () => this.listar() },
+    { texto: "Buscar empleado por identificación", accion: () => this.buscar() },
+    { texto: "Actualizar empleado", accion: () => this.actualizar() },
+    { texto: "Eliminar empleado", accion: () => this.eliminar() },
+  ];
+
+  constructor(servicio) {
+    this.#servicio = servicio;
+  }
+
+  async iniciar() {
+    console.log("\n=== ACME · Gestión de empleados ===");
+
+    while (true) {
+      try {
+        this.#mostrarMenu();
+        const opcion = await this.#preguntar("Seleccione una opción: ");
+        if (opcion === "0") break;
+
+        const seleccionada = this.#opciones[Number(opcion) - 1];
+        if (seleccionada) await seleccionada.accion();
+        else console.log("Opción no válida, intente de nuevo.");
+      } catch (error) {
+        if (error instanceof EntradaCerrada) break;
+        console.log(`Error: ${error.message}`); // se informa y la aplicación sigue
+      }
     }
 
-    async iniciar() {
-        let salir = false;
-        console.log("\nBienvenido al sistema de gestión de empleados ACME");
+    this.#entrada.close();
+    console.log("\nHasta luego.");
+  }
 
-        while (!salir) {
-            this.mostrarMenu();
-            const opcion = (await this.preguntar("Seleccione una opción: ")).trim();
-
-            try {
-                switch (opcion) {
-                    case "1":
-                        await this.registrar();
-                        break;
-                      case "2":
-                        this.listar();
-                        break;
-                      case "3":
-                        this.buscar();
-                        break;
-                      case "4":
-                        await this.actualizar();
-                        break;
-                      case "5":
-                        this.eliminar();
-                        break;
-                      case "0":
-                        salir = true;
-                        console.log("Hasta luego.");
-                        break;
-                      default:
-                        console.log("Opcion no valida. Intenta nuevamente.");
-                    } 
-            } catch (error) {
-                console.log(`No se pudo completar la operacion: ${error.message}`);
-              }
-              if (!salir) await this.preguntar("\nPresiona Enter para continuar...");
-        }
-        this.entrada.close();
+  async registrar() {
+    console.log("\n-- Registrar empleado --");
+    const datos = {};
+    for (const [campo, etiqueta] of CAMPOS) {
+      datos[campo] = await this.#preguntar(`${etiqueta}: `);
     }
 
-    mostrarMenu() {console.log(`
-        1. Registrar empleado
-        2. Listar empleados
-        3. Buscar empleado por identificacion
-        4. Actualizar empleado
-        5. Eliminar empleado
-        0. Salir
-        `);
-          }
+    const empleado = this.#servicio.registrar(datos);
+    console.log(`Empleado registrado. ID único: ${empleado.id}`);
+  }
 
-          async registrar() {
-            console.log("\nRegistrar nuevo empleado");
-            const datos = await this.leerDatos();
-            const empleado = await this.empleadoController.registrar(datos);
-            console.log(`Empleado registrado con ID: ${empleado.id}`);
-            }
+  listar() {
+    const empleados = this.#servicio.listar();
+    if (!empleados.length) {
+      console.log("No hay empleados registrados.");
+      return;
+    }
 
-            listar() {
-                const empleados = this.empleadoController.listar();
-                if (!empleados.length) {
-                    console.log("No hay empleados registrados.");
-                    return;
-                }
+    console.table(
+      empleados.map(({ id, identificacion, nombres, apellidos, cargo, salario }) => ({
+        id,
+        identificacion,
+        nombre: `${nombres} ${apellidos}`,
+        cargo,
+        salario,
+      })),
+    );
+  }
 
-                console.table(empleados.map((empleado) => ({
-                    id: empleado.id,
-                    identificacion: empleado.identificacion,
-                    nombres: empleado.nombres,
-                    apellidos: empleado.apellidos,
-                    cargo: empleado.cargo,
-                    salario: empleado.salario,
-                })));
-            }
+  async buscar() {
+    const identificacion = await this.#preguntar("Identificación: ");
+    console.table(this.#servicio.buscarPorIdentificacion(identificacion));
+  }
 
-            async buscar() {
-                const identificacion = await this.preguntar("Identificacion: ");
-                const empleado = this.empleadoController.buscar(identificacion.trim());
-                console.table([empleado]);
-              }
+  async actualizar() {
+    const id = await this.#preguntar("ID único del empleado: ");
+    const empleado = this.#servicio.obtenerPorId(id);
 
-              async actualizar() {
-                const id = await this.preguntar("ID unico del empleado: ");
-                const empleado = this.empleadoController.obtenerPorId
-                  ? this.empleadoController.obtenerPorId(id.trim())
-                  : null;
-            
-                if (!empleado) throw new Error("No se encontro el empleado indicado.");
-            
-                console.log("Presiona Enter para conservar el valor actual.");
-                const datos = {};
+    console.log("Presione Enter para conservar el valor actual.");
+    const cambios = {};
+    for (const [campo, etiqueta] of CAMPOS) {
+      const valor = await this.#preguntar(`${etiqueta} [${empleado[campo]}]: `);
+      if (valor) cambios[campo] = valor;
+    }
 
-                for (const campo of [
-                    "identificacion", "nombres", "apellidos", "genero", "email", "telefono", "direccion", "ciudad", "profesion", "cargo", "salario" ]) {
-                        const valor = await this.preguntar(`${campo} (${empleado[campo]}): `);
-                        datos[campo] = valor.trim() || empleado[campo];
-                    }
+    const actualizado = this.#servicio.actualizar(id, cambios);
+    console.log(`Empleado actualizado: ${actualizado.nombres} ${actualizado.apellidos}`);
+  }
 
-                    datos.salario = Number(datos.salario);
-                    const actualizado = this.empleadoController.actualizar(id.trim(), datos);
-                    console.log(`Empleado actualizado: ${actualizado.nombres} ${actualizado.apellidos}`);
-                }
+  async eliminar() {
+    const id = await this.#preguntar("ID único del empleado: ");
+    const empleado = this.#servicio.obtenerPorId(id);
 
-                async eliminar() {
-                    const id = await this.preguntar("ID unico del empleado: ");
-                    const confirmacion = await this.preguntar("¿Estas seguro de eliminar este empleado? (s/n): ");
-                    if (confirmacion.trim().toLowerCase() !== "s") {
-                        console.log("Eliminacion cancelada.");
-                        return;
-                    }
+    const respuesta = await this.#preguntar(
+      `¿Eliminar a ${empleado.nombres} ${empleado.apellidos}? (s/n): `,
+    );
+    if (respuesta.toLowerCase() !== "s") {
+      console.log("Eliminación cancelada.");
+      return;
+    }
 
-                    const empleado = this.empleadoController.eliminar(id.trim());
-                    console.log(`Empleado eliminado: ${empleado.nombres} ${empleado.apellidos}`);
-                }
+    this.#servicio.eliminar(id);
+    console.log("Empleado eliminado.");
+  }
 
-                async leerDatos() {
-                    const datos = {};
-                    for (const campo of [
-                        "identificacion", "nombres", "apellidos", "genero", "email", "telefono", "direccion", "ciudad", "profesion", "cargo", "salario" ]) {
-                            datos[campo] = await this.preguntar(`${campo}: `);
-                        }
+  #mostrarMenu() {
+    console.log("");
+    this.#opciones.forEach(({ texto }, i) => console.log(`${i + 1}. ${texto}`));
+    console.log("0. Salir");
+  }
 
-                    datos.salario = Number(datos.salario);
-                    return datos;
-                }
-
-                preguntar(mensaje) {
-                    return this.entrada.question(mensaje);
-                }
-            }
+  async #preguntar(mensaje) {
+    this.#entrada.setPrompt(mensaje);
+    this.#entrada.prompt();
+    const { value, done } = await this.#lineas.next();
+    if (done) throw new EntradaCerrada();
+    return value.trim();
+  }
+}
