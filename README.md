@@ -2,6 +2,11 @@
 
 Aplicación de consola en Node.js para que el área de Talento Humano de ACME registre, liste, busque, actualice y elimine empleados.
 
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES%20Modules-F7DF1E?logo=javascript&logoColor=black)
+![Tests](https://img.shields.io/badge/tests-node%3Atest-informational)
+![Dependencias](https://img.shields.io/badge/dependencias-0-success)
+
 Los datos se guardan en un arreglo en memoria (sin base de datos), así que se pierden al cerrar la aplicación. No usa frameworks ni librerías de terceros.
 
 ## Requisitos
@@ -11,8 +16,8 @@ Los datos se guardan en un arreglo en memoria (sin base de datos), así que se p
 ## Ejecución
 
 ```bash
-git clone https://github.com/TOTO05-a/prueba-tecnica_acme_antonio-cruz.git
-cd prueba-tecnica_acme_antonio-cruz
+git clone https://github.com/TOTO05-a/prueba-tecnica-acme.git
+cd prueba-tecnica-acme
 npm start
 ```
 
@@ -81,3 +86,11 @@ npm test
 ```
 
 Usa el runner nativo `node:test`. Cubre cada requerimiento funcional (RF-01 a RF-05) y cada regla de negocio (RN-01 a RN-05).
+
+## Variables de entorno
+
+Ninguna: la aplicación no usa configuración externa.
+
+## Autor
+
+**Antonio Cruz** · [github.com/TOTO05-a](https://github.com/TOTO05-a)
