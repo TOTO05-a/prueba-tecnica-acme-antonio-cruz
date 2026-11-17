@@ -1,3 +1,5 @@
+// modelo del empleado (solo datos)
+
 export class Empleado {
   constructor({
     id,

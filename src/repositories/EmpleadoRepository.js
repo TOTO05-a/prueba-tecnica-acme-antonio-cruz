@@ -1,3 +1,5 @@
+// capa de datos: empleados guardados en memoria
+
 import { Empleado } from "../models/Empleado.js";
 
 // Almacenamiento en memoria: los datos viven en un arreglo mientras la aplicación está abierta.

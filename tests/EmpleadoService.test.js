@@ -1,3 +1,5 @@
+// pruebas del servicio de empleados
+
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EmpleadoRepository } from "../src/repositories/EmpleadoRepository.js";

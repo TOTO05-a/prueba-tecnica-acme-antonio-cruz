@@ -1,3 +1,5 @@
+// vista de consola: menú y captura de datos
+
 import { createInterface } from "node:readline";
 import { stdin, stdout } from "node:process";
 

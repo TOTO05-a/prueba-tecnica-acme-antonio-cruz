@@ -1,3 +1,5 @@
+// punto de entrada: arma las dependencias y arranca el menú
+
 import { EmpleadoRepository } from "./repositories/EmpleadoRepository.js";
 import { EmpleadoService } from "./services/EmpleadoService.js";
 import { Consola } from "./views/Consola.js";

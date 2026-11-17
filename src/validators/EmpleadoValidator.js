@@ -1,3 +1,5 @@
+// reglas de negocio del empleado (RN-01 a RN-05)
+
 const GENEROS = ["M", "F", "O"];
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FORMATO_SALARIO = /^\d+(\.\d{1,2})?$/; // 6500 o 6500.50, sin separador de miles

@@ -1,3 +1,5 @@
+// capa de servicio: registrar, listar, buscar, actualizar y eliminar
+
 import { EmpleadoValidator } from "../validators/EmpleadoValidator.js";
 
 export class EmpleadoService {
